@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import { novels } from '../data/novels.js';
+---
+<Base title="异界笔录 - 网文小站">
+  <section class="hero">
+    <h1>📜 异界笔录</h1>
+    <p>穿越、重生、修仙……每一个脑洞，都值得被记录</p>
+  </section>
+  <main class="container">
+    <div class="novel-grid">
+      {novels.map(n => (
+        <a href={`/novel/${n.slug}`} class="novel-card">
+          <div class="card-cover" style={`background: ${n.gradient};`}>
+            {n.emoji}
+          </div>
+          <div class="card-body">
+            <h3>{n.title}</h3>
+            <div class="card-meta">
+              <span>📖 {n.wordCount} 字</span>
+              <span>✍️ 异界笔录</span>
+            </div>
+            <p class="card-desc">{n.desc}</p>
+            <div class="card-tags">
+              {n.tags.map(tag => <span class="tag">{tag}</span>)}
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </main>
+</Base>

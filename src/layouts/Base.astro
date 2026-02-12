@@ -1,0 +1,43 @@
+---
+const { title = '异界笔录 - 网文小站' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="site-title"><span>📜</span> 异界笔录</a>
+      <nav>
+        <a href="/">书架</a>
+        <a href="/about">关于</a>
+        <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+      </nav>
+    </div>
+  </header>
+  <slot />
+  <footer class="site-footer">
+    <p>© 2026 异界笔录 · 一个记录奇思妙想的小站</p>
+  </footer>
+  <script is:inline>
+    const t = localStorage.getItem('theme') || 'light';
+    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+    });
+  </script>
+</body>
+</html>
+<style is:global>
+  @import '../styles/global.css';
+</style>
