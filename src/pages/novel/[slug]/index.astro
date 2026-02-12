@@ -1,0 +1,157 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getAllNovels, getNovel } from '../../../data/novels.js';
+
+export function getStaticPaths() {
+  return getAllNovels().map(n => ({ params: { slug: n.slug } }));
+}
+
+const { slug } = Astro.params;
+const novel = getNovel(slug);
+if (!novel) return Astro.redirect('/');
+---
+<Base title={`${novel.title} - 异界笔录`}>
+  <main class="container toc-page">
+    <div class="novel-hero" style={`background: ${novel.gradient};`}>
+      <div class="novel-emoji">{novel.emoji}</div>
+      <h1>{novel.title}</h1>
+      <p class="novel-desc">{novel.desc}</p>
+      <div class="novel-stats">
+        <span>📖 {novel.totalWords} 字</span>
+        <span>📚 {novel.chapters.length} 章</span>
+        {novel.author && <span>✍️ {novel.author}</span>}
+      </div>
+      <div class="novel-tags">
+        {novel.tags.map(tag => <span class="tag tag-light">{tag}</span>)}
+      </div>
+    </div>
+
+    <div class="chapter-list">
+      <h2>📑 章节目录</h2>
+      {novel.chapters.map(ch => (
+        <a href={`/novel/${slug}/${ch.filename}`} class="chapter-item">
+          <span class="chapter-num">第{ch.num}章</span>
+          <span class="chapter-title">{ch.title}</span>
+          <span class="chapter-words">{ch.wordCount} 字</span>
+        </a>
+      ))}
+    </div>
+
+    {novel.chapters.length > 0 && (
+      <div class="start-reading">
+        <a href={`/novel/${slug}/${novel.chapters[0].filename}`} class="btn-start">
+          开始阅读 →
+        </a>
+      </div>
+    )}
+  </main>
+</Base>
+
+<style>
+  .toc-page { padding-bottom: 60px; }
+
+  .novel-hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+    border-radius: var(--radius);
+    color: #fff;
+    margin: 24px 0;
+  }
+  .novel-emoji { font-size: 4rem; margin-bottom: 16px; }
+  .novel-hero h1 {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+  .novel-desc {
+    font-size: 1rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto 16px;
+    line-height: 1.8;
+  }
+  .novel-stats {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    margin-bottom: 16px;
+  }
+  .novel-tags {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .tag-light {
+    background: rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+
+  .chapter-list {
+    margin-top: 32px;
+  }
+  .chapter-list h2 {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .chapter-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+    color: var(--text);
+    box-shadow: var(--shadow);
+  }
+  .chapter-item:hover {
+    transform: translateX(4px);
+    color: var(--accent);
+  }
+  .chapter-num {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    min-width: 60px;
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+  .chapter-title {
+    flex: 1;
+    font-size: 1rem;
+  }
+  .chapter-words {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .start-reading {
+    text-align: center;
+    margin-top: 32px;
+  }
+  .btn-start {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-start:hover {
+    background: var(--accent-light);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 640px) {
+    .novel-hero h1 { font-size: 1.5rem; }
+    .novel-stats { flex-direction: column; gap: 6px; }
+  }
+</style>

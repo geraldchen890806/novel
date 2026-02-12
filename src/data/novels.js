@@ -1,29 +1,56 @@
-export const novels = [
-  {
-    slug: 'programmer-in-ancient',
-    title: '代码改命：程序员穿越指南',
-    desc: '996的程序员猝死后穿越到大梁王朝，发现自己脑子里的编程思维竟然能改变这个世界的运行规则……',
-    wordCount: 2800,
-    tags: ['穿越', '轻松', '系统流'],
-    emoji: '💻',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  },
-  {
-    slug: 'rebirth-before-gaokao',
-    title: '重生之高考前夜',
-    desc: '三十五岁的社畜在加班途中出车祸，睁眼回到了2012年6月6日——高考前一天的晚上。',
-    wordCount: 2600,
-    tags: ['重生', '都市', '热血'],
-    emoji: '📝',
-    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  },
-  {
-    slug: 'cultivation-with-chatgpt',
-    title: '修仙：我有一个ChatGPT',
-    desc: '穿进修仙小说成了废材主角，还好脑子里多了个AI系统。"系统，帮我算算这个功法的最优修炼路径。"',
-    wordCount: 3000,
-    tags: ['修仙', '系统流', '爽文'],
-    emoji: '⚔️',
-    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  },
-];
+// Dynamic novel data loader using import.meta.glob
+const metaFiles = import.meta.glob('/src/content/novels/*/meta.json', { eager: true });
+const chapterFiles = import.meta.glob('/src/content/novels/*/*.md', { eager: true });
+
+function countWords(text) {
+  // Count Chinese characters + English words
+  const chinese = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+  const english = (text.match(/[a-zA-Z]+/g) || []).length;
+  return chinese + english;
+}
+
+export function getAllNovels() {
+  const novels = [];
+
+  for (const [path, meta] of Object.entries(metaFiles)) {
+    const slug = path.split('/').slice(-2, -1)[0];
+    const data = meta.default || meta;
+
+    // Gather chapters for this novel
+    const chapters = [];
+    for (const [cPath, chapter] of Object.entries(chapterFiles)) {
+      if (cPath.includes(`/${slug}/`)) {
+        const filename = cPath.split('/').pop().replace('.md', '');
+        const chapterNum = parseInt(filename, 10);
+        const fm = chapter.frontmatter || {};
+        const rawContent = chapter.rawContent ? chapter.rawContent() : '';
+        const wordCount = fm.wordCount || countWords(rawContent);
+        chapters.push({
+          num: chapterNum,
+          filename,
+          title: fm.title || `第${chapterNum}章`,
+          wordCount,
+          Content: chapter.Content,
+        });
+      }
+    }
+    chapters.sort((a, b) => a.num - b.num);
+
+    const totalWords = chapters.reduce((sum, c) => sum + c.wordCount, 0);
+
+    novels.push({
+      slug,
+      ...data,
+      chapters,
+      totalWords,
+      wordCount: totalWords,
+    });
+  }
+
+  novels.sort((a, b) => a.slug.localeCompare(b.slug));
+  return novels;
+}
+
+export function getNovel(slug) {
+  return getAllNovels().find(n => n.slug === slug);
+}

@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
-import { novels } from '../data/novels.js';
+import { getAllNovels } from '../data/novels.js';
+
+const novels = getAllNovels();
 ---
 <Base title="异界笔录 - 网文小站">
   <section class="hero">
@@ -10,15 +12,15 @@ import { novels } from '../data/novels.js';
   <main class="container">
     <div class="novel-grid">
       {novels.map(n => (
-        <a href={`/novel/${n.slug}`} class="novel-card">
+        <a href={`/novel/${n.slug}/`} class="novel-card">
           <div class="card-cover" style={`background: ${n.gradient};`}>
             {n.emoji}
           </div>
           <div class="card-body">
             <h3>{n.title}</h3>
             <div class="card-meta">
-              <span>📖 {n.wordCount} 字</span>
-              <span>✍️ 异界笔录</span>
+              <span>📖 {n.totalWords} 字</span>
+              <span>📚 {n.chapters.length} 章</span>
             </div>
             <p class="card-desc">{n.desc}</p>
             <div class="card-tags">

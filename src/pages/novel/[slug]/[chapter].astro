@@ -1,0 +1,245 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getAllNovels, getNovel } from '../../../data/novels.js';
+
+export function getStaticPaths() {
+  const paths = [];
+  for (const novel of getAllNovels()) {
+    for (const ch of novel.chapters) {
+      paths.push({
+        params: { slug: novel.slug, chapter: ch.filename },
+      });
+    }
+  }
+  return paths;
+}
+
+const { slug, chapter } = Astro.params;
+const novel = getNovel(slug);
+if (!novel) return Astro.redirect('/');
+
+const chapterIndex = novel.chapters.findIndex(c => c.filename === chapter);
+const currentChapter = novel.chapters[chapterIndex];
+if (!currentChapter) return Astro.redirect(`/novel/${slug}/`);
+
+const prevChapter = chapterIndex > 0 ? novel.chapters[chapterIndex - 1] : null;
+const nextChapter = chapterIndex < novel.chapters.length - 1 ? novel.chapters[chapterIndex + 1] : null;
+const { Content } = currentChapter;
+---
+<Base title={`${currentChapter.title} - ${novel.title} - 异界笔录`}>
+  <!-- Reading progress bar -->
+  <div class="progress-bar" id="progressBar"></div>
+
+  <main class="container reader-page">
+    <!-- Top navigation -->
+    <nav class="reader-nav">
+      <a href={`/novel/${slug}/`} class="nav-toc">📑 目录</a>
+      <div class="nav-chapters">
+        {prevChapter && <a href={`/novel/${slug}/${prevChapter.filename}`}>← 上一章</a>}
+        {nextChapter && <a href={`/novel/${slug}/${nextChapter.filename}`}>下一章 →</a>}
+      </div>
+      <button class="font-size-btn" id="fontSizeBtn" title="调节字体">字</button>
+    </nav>
+
+    <!-- Chapter header -->
+    <div class="reading-header">
+      <h1>{novel.title}</h1>
+      <h2>第{currentChapter.num}章 {currentChapter.title}</h2>
+      <div class="reading-meta">
+        <span>📖 {currentChapter.wordCount} 字</span>
+      </div>
+    </div>
+
+    <!-- Chapter content -->
+    <article class="reading-content" id="readingContent">
+      <Content />
+    </article>
+
+    <!-- Bottom navigation -->
+    <nav class="reader-nav reader-nav-bottom">
+      {prevChapter ? (
+        <a href={`/novel/${slug}/${prevChapter.filename}`} class="btn-chapter">← 上一章</a>
+      ) : <span></span>}
+      <a href={`/novel/${slug}/`} class="btn-chapter">📑 目录</a>
+      {nextChapter ? (
+        <a href={`/novel/${slug}/${nextChapter.filename}`} class="btn-chapter">下一章 →</a>
+      ) : <span class="btn-chapter btn-end">已是最新章节</span>}
+    </nav>
+  </main>
+
+  <!-- Font size popup -->
+  <div class="font-popup" id="fontPopup" style="display:none">
+    <button data-size="0.92">小</button>
+    <button data-size="1.08">中</button>
+    <button data-size="1.24">大</button>
+    <button data-size="1.4">特大</button>
+  </div>
+</Base>
+
+<style>
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    z-index: 200;
+    transition: width 0.1s;
+    width: 0%;
+  }
+
+  .reader-page { padding-bottom: 40px; }
+
+  .reader-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .reader-nav-bottom {
+    border-bottom: none;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+    margin-bottom: 0;
+    padding: 16px 0;
+  }
+  .nav-toc {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .nav-chapters {
+    display: flex;
+    gap: 16px;
+  }
+  .nav-chapters a, .btn-chapter {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .nav-chapters a:hover, .btn-chapter:hover {
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .btn-end {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .btn-end:hover { transform: none; }
+
+  .font-size-btn {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .font-size-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .font-popup {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    padding: 8px;
+    z-index: 150;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .font-popup button {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    color: var(--text);
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .font-popup button:hover {
+    background: var(--tag-bg);
+    color: var(--accent);
+  }
+
+  .reading-header {
+    text-align: center;
+    padding: 30px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+  }
+  .reading-header h1 {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .reading-header h2 {
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  @media (max-width: 640px) {
+    .reader-nav { font-size: 0.85rem; }
+    .reading-header h2 { font-size: 1.3rem; }
+  }
+</style>
+
+<script is:inline>
+  // Reading progress bar
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    document.getElementById('progressBar').style.width = progress + '%';
+  }
+  window.addEventListener('scroll', updateProgress);
+  updateProgress();
+
+  // Font size
+  const content = document.getElementById('readingContent');
+  const savedSize = localStorage.getItem('reader-font-size');
+  if (savedSize) content.style.fontSize = savedSize + 'rem';
+
+  const popup = document.getElementById('fontPopup');
+  document.getElementById('fontSizeBtn').addEventListener('click', () => {
+    popup.style.display = popup.style.display === 'none' ? 'flex' : 'none';
+  });
+  popup.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const size = btn.dataset.size;
+      content.style.fontSize = size + 'rem';
+      localStorage.setItem('reader-font-size', size);
+      popup.style.display = 'none';
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!popup.contains(e.target) && e.target.id !== 'fontSizeBtn') {
+      popup.style.display = 'none';
+    }
+  });
+</script>
